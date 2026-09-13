@@ -1,0 +1,9 @@
+name = "itinerary-email"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[vars]
+WEBHOOK_URL = "https://example.com/api/hooks/inbound-email"
+
+# The shared secret must match email.webhookSecret in the app's secrets.yml:
+#   npx wrangler secret put WEBHOOK_SECRET
