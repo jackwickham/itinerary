@@ -64,4 +64,6 @@ export const migrations: string[] = [
   // A key from ENTRY_ICONS, or NULL for the automatic icon. Validated in the app so
   // the icon set can grow without a migration.
   `ALTER TABLE itinerary_entries ADD COLUMN icon TEXT;`,
+  // Flight number ("BA432"), used to look up live status. Validated in the app.
+  `ALTER TABLE itinerary_entries ADD COLUMN flight_number TEXT;`,
 ];

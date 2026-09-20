@@ -76,7 +76,11 @@ export function browserTimeZone(): string {
  */
 export function tzAbbreviation(tz: string, date: LocalDate, time: string | null): string {
   const instant = entryInstant(date, time ?? '12:00', tz);
-  if (instant === null) return tz;
+  return instant === null ? tz : zoneLabelAt(tz, instant);
+}
+
+/** The same, for a moment already known as an instant. */
+export function zoneLabelAt(tz: string, instant: number | Date): string {
   let fallback = '';
   for (const locale of ['en-GB', 'en-US']) {
     const name =
@@ -130,6 +134,63 @@ export function suggestTimeZone(entries: Entry[], date: LocalDate | null, fallba
     best = e.end_tz ?? e.start_tz ?? best;
   }
   return best ?? fallback;
+}
+
+/** A local date as YYYY-MM-DD for an instant, in a given zone. */
+export function instantDate(iso: string, tz: string | null): LocalDate {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz ?? undefined,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(iso));
+}
+
+export interface InstantReference {
+  /** The day times are read against: another day is spelled out. */
+  date: LocalDate | null;
+  currentYear: number;
+}
+
+/**
+ * The wall-clock time of an instant where it happens: "14:05", "14:05 (15 Mar)"
+ * when that is a different day from `reference`, and with the zone's short name
+ * when `zone` is asked for: "14:05 (15 Mar) WEST".
+ */
+export function formatInstant(
+  iso: string,
+  tz: string | null,
+  reference?: InstantReference,
+  options: { zone?: boolean } = {},
+): string {
+  const at = new Date(iso);
+  const time = new Intl.DateTimeFormat('en-GB', {
+    timeZone: tz ?? undefined,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(at);
+  const date = reference?.date ? instantDate(iso, tz) : null;
+  const parts = [
+    time,
+    date && date !== reference!.date ? `(${formatShortDate(date, reference!.currentYear)})` : null,
+    options.zone && tz ? zoneLabelAt(tz, at) : null,
+  ];
+  return parts.filter(Boolean).join(' ');
+}
+
+/**
+ * The same moment as the viewer's own clock shows it, or null when that is the
+ * same reading anyway - so a flight leaving at 20:15 GMT+6 can say when to look
+ * again without repeating itself for someone already there.
+ */
+export function inViewerZone(iso: string, tz: string | null, reference?: InstantReference): string | null {
+  if (!tz) return null;
+  const home = browserTimeZone();
+  const there = formatInstant(iso, tz, reference);
+  const here = formatInstant(iso, home, reference);
+  // The viewer's own clock needs no zone name to go with it.
+  return there === here ? null : here;
 }
 
 export function formatDuration(ms: number): string {
@@ -194,6 +255,19 @@ export const STATUS_META: Record<EntryStatus, { label: string; pill: string }> =
   booked: { label: 'Booked', pill: 'bg-emerald-100 text-emerald-800' },
   cancelled: { label: 'Cancelled', pill: 'bg-stone-200 text-stone-600' },
 };
+
+// ---------------------------------------------------------------------------
+// Flights
+
+/** How a flight is running against its schedule, with the colour to say it in. */
+export function formatDelay(seconds: number | null): { text: string; tone: string } | null {
+  if (seconds === null) return null;
+  const minutes = Math.round(seconds / 60);
+  if (Math.abs(minutes) < 5) return { text: 'on time', tone: 'text-emerald-700' };
+  const amount = formatDuration(Math.abs(seconds) * 1000);
+  if (minutes < 0) return { text: `${amount} early`, tone: 'text-emerald-700' };
+  return { text: `${amount} late`, tone: minutes > 30 ? 'text-red-700' : 'text-amber-700' };
+}
 
 // ---------------------------------------------------------------------------
 // Imports

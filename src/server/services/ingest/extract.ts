@@ -1,4 +1,5 @@
 import { canonicalTimeZone, isValidDateString } from '../../../shared/dates.js';
+import { FLIGHT_NUMBER_PATTERN, normaliseFlightNumber } from '../../../shared/flights.js';
 import { normaliseTiming, timingProblem, type EntryData } from '../../../shared/schemas.js';
 import { getLLM } from '../llm/index.js';
 import { ReasoningLevel } from '../llm/interface.js';
@@ -31,6 +32,12 @@ function cleanTime(value: string | null): string | null {
   return h < 24 && m < 60 ? `${String(h).padStart(2, '0')}:${match[2]}` : null;
 }
 
+/** Anything that isn't recognisably a flight number is dropped rather than stored. */
+function cleanFlightNumber(value: string | null): string | null {
+  const v = value ? normaliseFlightNumber(value) : '';
+  return FLIGHT_NUMBER_PATTERN.test(v) ? v : null;
+}
+
 function cleanText(value: string | null, max: number): string | null {
   const v = value?.trim();
   return v ? v.slice(0, max) : null;
@@ -55,6 +62,7 @@ export function sanitiseProposedEntry(p: ProposedEntry): EntryData {
     end_time: cleanTime(p.end_time),
     end_tz: p.end_timezone ? canonicalTimeZone(p.end_timezone) : null,
     end_location: cleanText(p.end_location, 1000),
+    flight_number: p.type === 'travel' ? cleanFlightNumber(p.flight_number) : null,
     details: p.details
       .map((d) => ({ label: d.label.trim().slice(0, 100) || 'Detail', value: d.value.trim().slice(0, 2000) }))
       .filter((d) => d.value !== '')

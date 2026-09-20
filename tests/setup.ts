@@ -8,6 +8,7 @@ setConfigForTests(
     database: { path: ':memory:' },
     llm: { provider: 'openai', models: { extract: 'test-extract', match: 'test-match' } },
     email: { allowedSenders: ['me@example.com'] },
+    flights: { apiBase: 'https://aeroapi.test/aeroapi', cacheTtlSeconds: 300 },
   },
   { email: { webhookSecret: 'test-secret' } },
 );

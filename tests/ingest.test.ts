@@ -21,6 +21,7 @@ const outbound = proposed({
   start_time: '07:25',
   start_timezone: 'Europe/London',
   start_location: 'London Heathrow (LHR)',
+  flight_number: 'BA500',
   end_date: '2027-03-14',
   end_time: '10:05',
   end_timezone: 'Europe/Lisbon',
@@ -30,6 +31,7 @@ const outbound = proposed({
 const inbound = proposed({
   ...outbound,
   title: 'BA 501 Lisbon → London',
+  flight_number: 'BA501',
   start_date: '2027-03-18',
   start_time: '11:00',
   start_timezone: 'Europe/Lisbon',
@@ -89,6 +91,7 @@ describe('inbound email webhook', () => {
       inbound_email_id: res.body.id,
       start_tz: 'Europe/London',
       end_tz: 'Europe/Lisbon',
+      flight_number: 'BA500',
       details: [{ label: 'Booking ref', value: 'ABC123' }],
     });
   });
@@ -232,6 +235,12 @@ describe('sanitising proposed entries', () => {
       details: [{ label: 'Detail', value: 'ABC123' }],
       notes: '',
     });
+  });
+
+  it('keeps a flight number only for travel, and only when it looks like one', () => {
+    expect(sanitiseProposedEntry(proposed({ type: 'travel', flight_number: 'ba 432' })).flight_number).toBe('BA432');
+    expect(sanitiseProposedEntry(proposed({ type: 'travel', flight_number: 'TBC' })).flight_number).toBeNull();
+    expect(sanitiseProposedEntry(proposed({ type: 'activity', flight_number: 'BA432' })).flight_number).toBeNull();
   });
 
   it('keeps the icon the model chose', () => {

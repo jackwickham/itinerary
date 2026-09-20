@@ -8,6 +8,9 @@ A personal, mobile-first itinerary planner.
   be ideas, tentative, booked or cancelled, and can be scheduled at an exact local time
   (with time zones, including different start and end zones for travel), on a date,
   across a date range, or left unscheduled.
+- **Live flight status**: entries with a flight number show FlightAware's view of the
+  flight from a day before departure - expected departure and arrival, gate, terminal
+  and the inbound aircraft - cached on the server, with a refresh button.
 - **Email import**: forward a booking confirmation and an LLM extracts the entries
   (flight legs, hotel stays, …), including booking references and other details, and
   files them into the matching trip or a new one. Everything it creates can be edited,
@@ -51,6 +54,12 @@ curl -X POST localhost:3000/api/hooks/inbound-email \
 | `llm.provider`                  | `openai`              | only OpenAI for now                                   |
 | `llm.models.extract` / `.match` | `gpt-5.6-luna`        | model per task                                        |
 | `email.allowed_senders`         | none                  | addresses allowed to import; empty rejects everything |
+| `flights.cache_ttl_seconds`     | 300                   | how long a looked-up flight is reused                 |
+| `flights.api_base`              | AeroAPI               | override to point at a mock                           |
 
 `secrets.yml` (path from `SECRETS_FILE`, default `./secrets.yml`): `openai.apiKey`,
-`email.webhookSecret` (e.g. `openssl rand -hex 32`).
+`email.webhookSecret` (e.g. `openssl rand -hex 32`) and `flightaware.apiKey`. Without a
+FlightAware key the app works as before and flight entries just say live status isn't
+configured. AeroAPI charges per query, so a status is only fetched within 24 hours of
+departure and is then cached for `flights.cache_ttl_seconds`; the refresh button in an
+entry is the only thing that spends another query.

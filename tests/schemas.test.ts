@@ -64,6 +64,13 @@ describe('entry scheduling validation', () => {
     expect(e.end_date).toBe('2027-01-01');
   });
 
+  it('tidies a flight number and rejects nonsense', () => {
+    const e = entryCreateSchema.parse({ ...base, type: 'travel', flight_number: ' ba 432 ' });
+    expect(e.flight_number).toBe('BA432');
+    expect(entryCreateSchema.parse({ ...base, flight_number: '' }).flight_number).toBeNull();
+    expect(() => entryCreateSchema.parse({ ...base, flight_number: 'Heathrow' })).toThrow(/flight number/);
+  });
+
   it('rejects entries that end before they start', () => {
     expect(() =>
       entryCreateSchema.parse({ ...base, start_date: '2027-03-12', end_date: '2027-03-10' }),

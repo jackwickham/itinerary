@@ -77,12 +77,12 @@ export function createEntry(tripId: number, input: unknown, provenance: EntryPro
          trip_id, title, type, status, icon,
          start_date, start_time, start_tz, start_location,
          end_date, end_time, end_tz, end_location,
-         details, notes, source, inbound_email_id
+         flight_number, details, notes, source, inbound_email_id
        ) VALUES (
          @trip_id, @title, @type, @status, @icon,
          @start_date, @start_time, @start_tz, @start_location,
          @end_date, @end_time, @end_tz, @end_location,
-         @details, @notes, @source, @inbound_email_id
+         @flight_number, @details, @notes, @source, @inbound_email_id
        )`,
     )
     .run({
@@ -111,7 +111,7 @@ export function updateEntry(id: number, patch: unknown): Entry {
          start_date = @start_date, start_time = @start_time, start_tz = @start_tz,
          start_location = @start_location,
          end_date = @end_date, end_time = @end_time, end_tz = @end_tz, end_location = @end_location,
-         details = @details, notes = @notes, updated_at = @updated_at
+         flight_number = @flight_number, details = @details, notes = @notes, updated_at = @updated_at
        WHERE id = @id`,
     )
     .run({ ...toParams(data), trip_id: tripId ?? existing.trip_id, updated_at: nowIso(), id });

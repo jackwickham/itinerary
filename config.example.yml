@@ -9,6 +9,10 @@ llm:
     extract: gpt-5.6-luna     # Booking email -> itinerary entries
     match: gpt-5.6-luna       # Which trip do the entries belong to?
 
+flights:
+  # Live flight status from FlightAware AeroAPI (needs flightaware.apiKey in secrets).
+  cache_ttl_seconds: 300
+
 email:
   # Only emails from these senders (envelope sender or From: header) are imported.
   allowed_senders:

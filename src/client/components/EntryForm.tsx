@@ -8,6 +8,7 @@ import {
   type EntryType,
 } from '../../shared/constants';
 import { canonicalTimeZone, type LocalDate } from '../../shared/dates';
+import { FLIGHT_NUMBER_PATTERN, normaliseFlightNumber } from '../../shared/flights';
 import type { Detail, Entry, EntryData, Trip } from '../../shared/schemas';
 import { api, errorMessage, type EntryPayload } from '../api';
 import { STATUS_META, TYPE_META, browserTimeZone, suggestTimeZone } from '../format';
@@ -38,6 +39,7 @@ interface FormState {
   end_time: string;
   end_tz: string;
   end_location: string;
+  flight_number: string;
   details: Detail[];
   notes: string;
   trip_id: number;
@@ -68,6 +70,7 @@ function initialState(target: EntryFormTarget, entries: Entry[]): FormState {
     end_time: e.end_time ?? '',
     end_tz: e.end_tz ?? '',
     end_location: e.end_location ?? '',
+    flight_number: e.flight_number ?? '',
     details: e.details ?? [],
     notes: e.notes ?? '',
     trip_id: target.mode === 'edit' ? target.entry.trip_id : target.tripId,
@@ -84,6 +87,7 @@ function toPayload(s: FormState): EntryPayload {
     icon: s.icon,
     start_location: s.start_location,
     end_location: s.end_location,
+    flight_number: travel ? s.flight_number : null,
     details: cleanDetails(s.details),
     notes: s.notes,
     start_date: null as string | null,
@@ -128,6 +132,9 @@ function validate(s: FormState): string | null {
   if (s.mode !== 'unscheduled' && !s.start_date) return 'Choose a date';
   if (s.mode === 'time' && !s.start_time) return 'Choose a time';
   if (s.mode === 'range' && !s.end_date) return 'Choose an end date';
+  if (s.type === 'travel' && s.flight_number.trim() && !FLIGHT_NUMBER_PATTERN.test(normaliseFlightNumber(s.flight_number))) {
+    return 'Flight number should look like BA432';
+  }
   const zones = [s.start_tz, s.type === 'travel' ? s.end_tz : ''].filter((z) => z.trim());
   if (s.mode !== 'unscheduled' && s.mode !== 'date' && zones.some((z) => !canonicalTimeZone(z))) {
     return 'Unknown time zone';
@@ -338,10 +345,20 @@ export function EntryForm({
         </fieldset>
 
         {travel ? (
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="From">{input('start_location', 'text', { placeholder: 'e.g. London Heathrow' })}</Field>
-            <Field label="To">{input('end_location', 'text', { placeholder: 'e.g. Lisbon' })}</Field>
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="From">{input('start_location', 'text', { placeholder: 'e.g. London Heathrow' })}</Field>
+              <Field label="To">{input('end_location', 'text', { placeholder: 'e.g. Lisbon' })}</Field>
+            </div>
+            <Field label="Flight number" hint="Flights only: shows live status on the day.">
+              {input('flight_number', 'text', {
+                placeholder: 'e.g. BA432',
+                autoCapitalize: 'characters',
+                autoCorrect: 'off',
+                spellCheck: false,
+              })}
+            </Field>
+          </>
         ) : (
           <div className="space-y-3">
             <Field label={stay ? 'Address' : 'Location'}>{input('start_location')}</Field>

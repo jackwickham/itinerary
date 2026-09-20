@@ -81,6 +81,15 @@ export const proposedEntrySchema = z.object({
     .string()
     .nullable()
     .describe('For travel, the arrival airport or station. Null for other types unless they end somewhere else'),
+  flight_number: z
+    .string()
+    .nullable()
+    .describe(
+      'Flights only: the number of the flight actually being taken, as the airline code and number ' +
+        'with no space, e.g. "BA432", "U28564". Where the ticket is a codeshare, give the operating ' +
+        'carrier\'s number if the email states it, otherwise the one on the ticket. Null for anything ' +
+        'that is not a flight',
+    ),
   details: z
     .array(detail)
     .describe(

@@ -27,9 +27,11 @@ npm run ingest -- file.eml [--dry-run]   # run the email pipeline on a saved ema
 
 ```
 src/shared/     constants.ts, dates.ts (local-date maths, trip classification,
-                timeline grouping), schemas.ts (zod schemas + API types)
+                timeline grouping), flights.ts (flight numbers, status window and
+                the status API types), schemas.ts (zod schemas + API types)
 src/server/
   services/     trips.ts, entries.ts: the only code that writes trips/entries
+                flights.ts: FlightAware AeroAPI client, in-memory status cache
                 inbound-emails.ts: storage for received emails
                 ingest/: mime → extract (LLM) → match (LLM) → pipeline, serial queue
                 llm/: provider abstraction (copied from ../recipes), OpenAI only
@@ -55,6 +57,9 @@ email-worker/   Cloudflare Email Worker that POSTs raw mail to the webhook
 - Tailwind v4 utilities that set the same property (`w-full` vs `w-2/5`, `hidden` vs
   `inline-flex`) don't override each other by order in `className`; put the competing
   one on a wrapper instead.
+- Live flight status is only fetched inside `flightWindow` (a day before departure
+  until after arrival) and cached in memory; every AeroAPI query is billed, so the
+  client shows what the cache has until the refresh button asks for more.
 - Trip dates are never stored: they're inferred in SQL from booked and tentative
   entries (`DATE_DRIVING_STATUSES`), and each date can be overridden separately.
 - LLM payloads are zod schemas in `services/ingest/schemas.ts`. Their `.describe()`

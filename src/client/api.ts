@@ -1,3 +1,4 @@
+import type { FlightStatus } from '../shared/flights';
 import type { Entry, ImportDetail, ImportSummary, Trip, TripWithEntries } from '../shared/schemas';
 
 export class ApiError extends Error {
@@ -53,6 +54,9 @@ export const api = {
   updateEntry: (id: number, data: EntryPayload) =>
     request<Entry>(`/entries/${id}`, { method: 'PATCH', json: data }),
   deleteEntry: (id: number) => request<void>(`/entries/${id}`, { method: 'DELETE' }),
+  /** Live status for a flight entry; `refresh` skips the server's cached copy. */
+  getFlightStatus: (id: number, refresh = false) =>
+    request<FlightStatus>(`/entries/${id}/flight-status${refresh ? '?refresh=true' : ''}`),
 
   listImports: (limit?: number) => request<ImportSummary[]>(`/imports${limit ? `?limit=${limit}` : ''}`),
   getImport: (id: number) => request<ImportDetail>(`/imports/${id}`),

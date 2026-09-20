@@ -41,6 +41,7 @@ export function proposed(overrides: Partial<ProposedEntry> = {}): ProposedEntry 
     end_time: null,
     end_timezone: null,
     end_location: null,
+    flight_number: null,
     details: [],
     notes: null,
     ...overrides,

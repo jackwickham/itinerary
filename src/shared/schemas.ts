@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ENTRY_STATUSES, ENTRY_TYPES, ICON_KEYS, type Source } from './constants.js';
 import { canonicalTimeZone, entryInstant, isValidDateString, type LocalDate } from './dates.js';
+import { FLIGHT_NUMBER_PATTERN, normaliseFlightNumber } from './flights.js';
 
 /**
  * Validation shared by the API, the UI and email ingestion. Everything that writes
@@ -24,6 +25,12 @@ export const timeStringSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Expected a time as HH:MM');
 
+/** Stored tidied up ("ba 432" becomes "BA432") so it can be used as a FlightAware ident. */
+export const flightNumberSchema = z
+  .string()
+  .transform(normaliseFlightNumber)
+  .refine((value) => FLIGHT_NUMBER_PATTERN.test(value), 'Expected a flight number like BA432');
+
 export const timeZoneSchema = z.string().transform((value, ctx) => {
   const canonical = canonicalTimeZone(value);
   if (!canonical) {
@@ -37,6 +44,7 @@ const nullableDate = z.preprocess(blankToNull, dateStringSchema.nullable());
 const nullableTime = z.preprocess(blankToNull, timeStringSchema.nullable());
 const nullableTimeZone = z.preprocess(blankToNull, timeZoneSchema.nullable());
 const nullableText = z.preprocess(blankToNull, z.string().trim().max(1000).nullable());
+const nullableFlightNumber = z.preprocess(blankToNull, flightNumberSchema.nullable());
 
 export const detailSchema = z.object({
   label: z.string().trim().min(1, 'Detail label is required').max(100),
@@ -62,6 +70,8 @@ const entryShape = {
   end_time: nullableTime,
   end_tz: nullableTimeZone,
   end_location: nullableText,
+  /** Travel only: the number live flight status is looked up by. */
+  flight_number: nullableFlightNumber,
   details: z.array(detailSchema).max(50),
   notes: z.string().max(20000),
 };
@@ -143,6 +153,7 @@ export const entryCreateSchema = z
     end_time: nullableTime.default(null),
     end_tz: nullableTimeZone.default(null),
     end_location: nullableText.default(null),
+    flight_number: nullableFlightNumber.default(null),
     details: entryShape.details.default([]),
     notes: entryShape.notes.default(''),
   })

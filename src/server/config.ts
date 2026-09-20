@@ -15,6 +15,14 @@ export interface Config {
     /** Lower-cased addresses allowed to submit booking emails. */
     allowedSenders: string[];
   };
+  flights: FlightsConfig;
+}
+
+/** Live flight status, from FlightAware AeroAPI. Disabled without an API key. */
+export interface FlightsConfig {
+  apiBase: string;
+  /** How long a looked-up flight is reused before the next fetch. */
+  cacheTtlSeconds: number;
 }
 
 /** One model per {@link LLMTask}. */
@@ -24,6 +32,9 @@ export type LLMProvider = 'openai';
 
 export interface Secrets {
   openai?: {
+    apiKey: string;
+  };
+  flightaware?: {
     apiKey: string;
   };
   email?: {
@@ -51,6 +62,7 @@ export function loadConfig(): Config {
         database?: { path?: string };
         llm?: { provider?: LLMProvider; models?: Partial<TaskModels> };
         email?: { allowed_senders?: string[] };
+        flights?: { api_base?: string; cache_ttl_seconds?: number };
       } | null) ?? {}
     : {};
 
@@ -72,6 +84,10 @@ export function loadConfig(): Config {
     },
     email: {
       allowedSenders: (parsed.email?.allowed_senders ?? []).map((s) => s.trim().toLowerCase()),
+    },
+    flights: {
+      apiBase: parsed.flights?.api_base ?? 'https://aeroapi.flightaware.com/aeroapi',
+      cacheTtlSeconds: parsed.flights?.cache_ttl_seconds ?? 300,
     },
   };
   return cachedConfig;

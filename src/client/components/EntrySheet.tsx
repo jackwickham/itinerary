@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { ENTRY_STATUSES } from '../../shared/constants';
 import { shiftEntryDates, todayLocal } from '../../shared/dates';
+import { flightWindow, isWithinFlightWindow } from '../../shared/flights';
 import type { Entry, Trip } from '../../shared/schemas';
 import { api, errorMessage, type EntryPayload } from '../api';
-import { STATUS_META, TYPE_META, describeWhen, entryIcon } from '../format';
+import { STATUS_META, TYPE_META, describeWhen, entryIcon, guessIcon } from '../format';
+import { FlightStatusPanel } from './FlightStatusPanel';
 import { Sheet } from './Sheet';
 import { TripPicker } from './TripPicker';
 import { Button, Field, FormError, Segmented, inputClass } from './ui';
@@ -64,6 +66,10 @@ export function EntrySheet({
 
   const when = describeWhen(entry, currentYear);
   const travel = entry.type === 'travel';
+  // Live status is only worth showing around the departure, and only for flights.
+  const statusWindow = flightWindow(entry);
+  const liveStatus = !!statusWindow && isWithinFlightWindow(statusWindow);
+  const flightNumberMissing = liveStatus && !entry.flight_number && (entry.icon ?? guessIcon(entry)) === 'plane';
 
   let body;
   if (view === 'move-date') {
@@ -148,6 +154,12 @@ export function EntrySheet({
               )}
             </dd>
           </div>
+          {entry.flight_number && (
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">Flight</dt>
+              <dd className="mt-0.5">{entry.flight_number}</dd>
+            </div>
+          )}
           {(entry.start_location || entry.end_location) && (
             <div>
               <dt className="text-xs font-medium uppercase tracking-wide text-stone-500">
@@ -177,6 +189,13 @@ export function EntrySheet({
               </li>
             ))}
           </ul>
+        )}
+
+        {liveStatus && entry.flight_number && <FlightStatusPanel entry={entry} currentYear={currentYear} />}
+        {flightNumberMissing && (
+          <p className="text-sm text-stone-500">
+            Add a flight number when editing to see live departure, gate and inbound aircraft details.
+          </p>
         )}
 
         {entry.notes && <p className="whitespace-pre-wrap text-sm text-stone-700">{entry.notes}</p>}
