@@ -3,7 +3,7 @@ import request from 'supertest';
 import { createApp } from '../src/server/app.js';
 import { getInboundEmail, storeInboundEmail } from '../src/server/services/inbound-emails.js';
 import { sanitiseProposedEntry } from '../src/server/services/ingest/extract.js';
-import { parseEmail } from '../src/server/services/ingest/mime.js';
+import { parseEmail, stripForwardPrefixes } from '../src/server/services/ingest/mime.js';
 import { drainImports, enqueueImport } from '../src/server/services/ingest/queue.js';
 import { setLLM } from '../src/server/services/llm/index.js';
 import { createEntry } from '../src/server/services/entries.js';
@@ -272,6 +272,16 @@ describe('parseEmail', () => {
     expect(email.text).not.toContain('pixel.gif');
     expect(email.text).not.toContain('xxxx');
     expect(email.fromAddress).toBe('me@example.com');
+  });
+
+  it('names the import after the booking, not the forwarding', async () => {
+    const email = await parseEmail(makeEmail({ subject: 'Fwd: Re: Your booking BA500', text: 'hi' }));
+    expect(email.subject).toBe('Your booking BA500');
+
+    expect(stripForwardPrefixes('FW: Hotel confirmed')).toBe('Hotel confirmed');
+    expect(stripForwardPrefixes('RE[2]: WG: Tickets')).toBe('Tickets');
+    expect(stripForwardPrefixes('Reservation: Taberna da Rua')).toBe('Reservation: Taberna da Rua');
+    expect(stripForwardPrefixes('Fwd:')).toBe('');
   });
 
   it('collects PDFs and inlines calendar attachments', async () => {

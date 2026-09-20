@@ -110,11 +110,6 @@ export default function TripPage() {
             {range && (manualDates ? ' · dates set manually' : ' · from bookings')}
           </p>
         </button>
-        {trip.source === 'email' && (
-          <p className="mt-2 inline-block rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-800">
-            ✉ Auto-created from an email. Rename, merge or delete it if that was wrong.
-          </p>
-        )}
         {(timeline.unscheduled.length > 0 || cancelledCount > 0) && (
           <div className="mt-3 flex flex-wrap gap-2 text-sm">
             {timeline.unscheduled.length > 0 && (

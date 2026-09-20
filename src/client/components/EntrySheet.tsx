@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Link } from 'react-router';
 import { ENTRY_STATUSES } from '../../shared/constants';
 import { shiftEntryDates, todayLocal } from '../../shared/dates';
 import { flightWindow, isWithinFlightWindow } from '../../shared/flights';
 import type { Entry, Trip } from '../../shared/schemas';
 import { api, errorMessage, type EntryPayload } from '../api';
-import { STATUS_META, TYPE_META, describeWhen, entryIcon, guessIcon } from '../format';
+import { STATUS_META, TYPE_META, describeWhen, entryIcon, guessIcon, mapsUrl } from '../format';
 import { FlightStatusPanel } from './FlightStatusPanel';
 import { Sheet } from './Sheet';
 import { TripPicker } from './TripPicker';
@@ -166,7 +166,21 @@ export function EntrySheet({
                 {travel ? 'Route' : 'Where'}
               </dt>
               <dd className="mt-0.5">
-                {[entry.start_location, entry.end_location].filter(Boolean).join(' → ')}
+                {[entry.start_location, entry.end_location]
+                  .filter((place): place is string => !!place)
+                  .map((place, i) => (
+                    <Fragment key={i}>
+                      {i > 0 && <span className="text-stone-400"> → </span>}
+                      <a
+                        href={mapsUrl(place)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sky-800 underline decoration-sky-800/40 underline-offset-2"
+                      >
+                        {place}
+                      </a>
+                    </Fragment>
+                  ))}
               </dd>
             </div>
           )}

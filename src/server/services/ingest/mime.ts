@@ -16,6 +16,19 @@ export interface ParsedEmail {
   pdfs: LLMFile[];
 }
 
+/**
+ * Mail clients stack a marker on the front of the subject each time a message is
+ * forwarded or replied to; none of that belongs in the name of an import. The raw
+ * email is kept, so the original subject is never lost.
+ */
+const FORWARD_PREFIX = /^\s*(?:re|fw|fwd|aw|wg|tr|sv|vs|rv|enc|doorst)\s*(?:\[\d+\])?\s*:\s*/i;
+
+export function stripForwardPrefixes(subject: string): string {
+  let cleaned = subject.trim();
+  while (FORWARD_PREFIX.test(cleaned)) cleaned = cleaned.replace(FORWARD_PREFIX, '').trim();
+  return cleaned;
+}
+
 const MAX_TEXT_CHARS = 100_000;
 const MAX_PDFS = 3;
 const MAX_PDF_BYTES = 5 * 1024 * 1024;
@@ -48,7 +61,7 @@ export async function parseEmail(raw: Buffer): Promise<ParsedEmail> {
   if (body.length > MAX_TEXT_CHARS) body = `${body.slice(0, MAX_TEXT_CHARS)}\n\n[truncated]`;
 
   return {
-    subject: mail.subject?.trim() || null,
+    subject: stripForwardPrefixes(mail.subject ?? '') || null,
     fromAddress: from?.address?.toLowerCase() ?? null,
     fromHeader: from ? (mail.from as AddressObject).text : null,
     messageId: mail.messageId ?? null,

@@ -208,6 +208,15 @@ export function travelDuration(e: Entry): number | null {
   return start !== null && end !== null && end > start ? end - start : null;
 }
 
+/**
+ * A maps link for a free-text place. Google's universal search URL hands off to
+ * the Google Maps app on Android and iOS when it's installed, and opens the site
+ * otherwise, so one link works everywhere.
+ */
+export function mapsUrl(place: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`;
+}
+
 // ---------------------------------------------------------------------------
 // Entry presentation
 
