@@ -193,7 +193,7 @@ export function EntrySheet({
                 <button
                   type="button"
                   onClick={() => copy(i, d.value)}
-                  className="flex w-full items-baseline justify-between gap-3 px-3 py-2.5 text-left hover:bg-stone-50"
+                  className="flex w-full items-baseline justify-between gap-3 py-2.5 pr-6 pl-3 text-left hover:bg-stone-50"
                 >
                   <span className="shrink-0 text-sm text-stone-500">{d.label}</span>
                   <span className="min-w-0 break-words text-right font-medium select-text">

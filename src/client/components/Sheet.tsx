@@ -40,7 +40,9 @@ export function Sheet({
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
-      className="m-0 mt-auto w-full max-w-none animate-sheet-up rounded-t-2xl bg-white p-0 text-stone-900 shadow-2xl sm:m-auto sm:max-w-lg sm:rounded-2xl"
+      // Size against the viewport so Firefox Android's selection-handle overflow
+      // cannot widen the sheet through its containing block. Scroll only the body.
+      className="m-0 mt-auto w-[100dvw] max-w-[100dvw] animate-sheet-up overflow-hidden rounded-t-2xl bg-white p-0 text-stone-900 shadow-2xl sm:m-auto sm:max-w-lg sm:rounded-2xl"
       style={{ maxHeight: '92dvh' }}
     >
       <div className="flex max-h-[92dvh] flex-col">
